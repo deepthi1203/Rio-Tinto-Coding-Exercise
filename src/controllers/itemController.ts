@@ -1,32 +1,90 @@
 import { Request, Response } from 'express';
 import ItemService from '../services/itemService';
+import mongoose from 'mongoose';
 
 class ItemController {
-  async createItem(req: Request, res: Response) {
-    const { name, description } = req.body;
-    const newItem = await ItemService.createItem(name, description);
-    res.status(201).json(newItem);
+  createItem = async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      this.validateItemFields(name, description);
+      const newItem = await ItemService.createItem(name, description);
+      return res.status(201).json(newItem);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  updateItem = async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      this.validateItemFields(name, description);
+      const updatedItem = await ItemService.updateItem(req.params.id, name, description);
+      if (!updatedItem) return res.status(404).json({ error: 'Item not found' });
+      return res.status(200).json(updatedItem);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  patchItem = async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      const updates: Partial<{ name: string; description: string }> = {};
+      if (name) updates.name = name;
+      if (description) updates.description = description;
+      const updatedItem = await ItemService.patchItem(req.params.id, updates);
+      if (!updatedItem) return res.status(404).json({ error: 'Item not found' });
+      return res.status(200).json(updatedItem);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  getItems = async (req: Request, res: Response) => {
+    try {
+      const items = await ItemService.getItems();
+      return res.status(200).json(items);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  getItemById = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      // Check if the ID is a valid ObjectId
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' });
+      }
+
+      const item = await ItemService.getItemById(req.params.id);
+      if (!item) return res.status(404).json({ error: 'Item not found' });
+      return res.status(200).json(item);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  deleteItem = async (req: Request, res: Response) => {
+    try {
+      const deletedItem = await ItemService.deleteItem(req.params.id);
+      if (!deletedItem) return res.status(404).json({ error: 'Item not found' });
+      return res.status(200).json({ message: 'Item deleted successfully' });
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  private validateItemFields(name: string, description: string) {
+    if (!name || !description) {
+      throw new Error('Please provide both name and description.');
+    }
   }
 
-  async getItems(req: Request, res: Response) {
-    const items = await ItemService.getItems();
-    res.status(200).json(items);
-  }
-
-  async getItemById(req: Request, res: Response) {
-    const item = await ItemService.getItemById(req.params.id);
-    res.status(200).json(item);
-  }
-
-  async updateItem(req: Request, res: Response) {
-    const { name, description } = req.body;
-    const updatedItem = await ItemService.updateItem(req.params.id, name, description);
-    res.status(200).json(updatedItem);
-  }
-
-  async deleteItem(req: Request, res: Response) {
-    const deletedItem = await ItemService.deleteItem(req.params.id);
-    res.status(200).json({ message: 'Item deleted successfully' });
+  private handleError(res: Response, error: Error) {
+    const statusCode = error.message.includes('Please provide') ? 400 : 500;
+    return res.status(statusCode).json({ error: error.message });
   }
 }
 

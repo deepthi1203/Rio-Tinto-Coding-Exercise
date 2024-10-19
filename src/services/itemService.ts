@@ -18,6 +18,11 @@ class ItemService {
     return ItemModel.findByIdAndUpdate(id, { name, description }, { new: true });
   }
 
+  // PATCH Method (Partial Update)
+  async patchItem(id: string, updates: Partial<{ name: string; description: string }>) {
+    return ItemModel.findByIdAndUpdate(id, updates, { new: true });
+  }
+
   async deleteItem(id: string) {
     return ItemModel.findByIdAndDelete(id);
   }
