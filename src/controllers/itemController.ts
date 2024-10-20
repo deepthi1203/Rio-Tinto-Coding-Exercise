@@ -16,6 +16,7 @@ class ItemController {
 
   updateItem = async (req: Request, res: Response) => {
     try {
+      this.validateObjectId(req.params.id);
       const { name, description } = req.body;
       this.validateItemFields(name, description);
       const updatedItem = await ItemService.updateItem(req.params.id, name, description);
@@ -28,6 +29,7 @@ class ItemController {
 
   patchItem = async (req: Request, res: Response) => {
     try {
+      this.validateObjectId(req.params.id);
       const { name, description } = req.body;
       const updates: Partial<{ name: string; description: string }> = {};
       if (name) updates.name = name;
@@ -51,13 +53,7 @@ class ItemController {
 
   getItemById = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-
-      // Check if the ID is a valid ObjectId
-      if (!mongoose.isValidObjectId(id)) {
-        return res.status(400).json({ error: 'Invalid ID format' });
-      }
-
+      this.validateObjectId(req.params.id);
       const item = await ItemService.getItemById(req.params.id);
       if (!item) return res.status(404).json({ error: 'Item not found' });
       return res.status(200).json(item);
@@ -68,6 +64,7 @@ class ItemController {
 
   deleteItem = async (req: Request, res: Response) => {
     try {
+      this.validateObjectId(req.params.id);
       const deletedItem = await ItemService.deleteItem(req.params.id);
       if (!deletedItem) return res.status(404).json({ error: 'Item not found' });
       return res.status(200).json({ message: 'Item deleted successfully' });
@@ -78,12 +75,19 @@ class ItemController {
 
   private validateItemFields(name: string, description: string) {
     if (!name || !description) {
-      throw new Error('Please provide both name and description.');
+      throw new Error('Please provide both nme and description.');
+    }
+  }
+
+  private validateObjectId(id: string) {
+    if (!mongoose.isValidObjectId(id)) {
+      throw new Error('Invalid ID format');
     }
   }
 
   private handleError(res: Response, error: Error) {
-    const statusCode = error.message.includes('Please provide') ? 400 : 500;
+    const statusCode = error.message.includes('Invalid ID format') ? 400 :
+                       error.message.includes('Please provide') ? 400 : 500;
     return res.status(statusCode).json({ error: error.message });
   }
 }
