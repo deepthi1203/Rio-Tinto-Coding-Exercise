@@ -8,7 +8,7 @@ interface Item extends Document {
 const itemSchema = new Schema<Item>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-});
+}, { versionKey: false }); // disable versioning which is Mongoose’s internal use 
 
 const ItemModel = model<Item>('Item', itemSchema);
 
