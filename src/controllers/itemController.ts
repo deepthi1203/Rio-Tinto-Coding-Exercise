@@ -75,7 +75,7 @@ class ItemController {
 
   private validateItemFields(name: string, description: string) {
     if (!name || !description) {
-      throw new Error('Please provide both nme and description.');
+      throw new Error('Please provide both name and description.');
     }
   }
 
